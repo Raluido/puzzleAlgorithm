@@ -1,83 +1,89 @@
 <?php
 
+
+// $w represents the array width the array return will content
+// $h represents the array height the array return will content
+// $puzzlePieces represents an array with $w * $h arrays inside
+
 function getPuzzleAssemble($w, $h, $puzzlePieces)
 {
-    $puzzleComplete = array();
+    $puzzlePiecesTaken = array();
     $leftSide = null;
     $topSide = null;
-    $rightSide = null;
-    $bottomSide = null;
+    $puzzlePiecesPos = '';
 
-    for ($i = 0; $i < 1; $i++) {
-        for ($j = 0; $j < 2; $j++) {
-            $puzzleComplete[$i][] = findAPiece($i, $j, $w, $h, $leftSide, $topSide, $rightSide, $bottomSide, $puzzlePieces);
+    for ($i = 0; $i < $h; $i++) {
+        for ($j = 0; $j < $w; $j++) {
+            [$puzzlePiecesPos, $puzzleComplete[$i][]] = findAPiece($i, $j, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken);
             $leftSide = $puzzleComplete[$i][$j][2];
             $topSide = $puzzleComplete[$i][$j][3];
+            $puzzlePiecesTaken[] = $puzzlePiecesPos;
         }
     }
     return $puzzleComplete;
 }
 
 
-function findAPiece($x, $y, $w, $h, $leftSide = null, $topSide = null, $rightSide = null, $bottomSide = null, $puzzlePieces = null)
+function findAPiece($x, $y, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken)
 {
     if ($x == 0 && $y == 0) {
         // print_r("find a piece");
-        return rotatePuzzle($puzzlePieces, 0, 0, $rightSide, $bottomSide);
+        return rotatePuzzle($puzzlePieces, 0, 0, null, null, $puzzlePiecesTaken);
     } else if ($y == $w && $x == 0) {
-        return rotatePuzzle($puzzlePieces, $leftSide, 0, 0, $bottomSide);
+        return rotatePuzzle($puzzlePieces, $leftSide, 0, 0, null, $puzzlePiecesTaken);
     } else if ($y == 0 && $x == $h) {
-        return rotatePuzzle($puzzlePieces, 0, $topSide, $rightSide, 0);
+        return rotatePuzzle($puzzlePieces, 0, $topSide, null, 0, $puzzlePiecesTaken);
     } else if ($y == $w && $x == $h) {
-        return rotatePuzzle($puzzlePieces, $leftSide, $topSide, 0, 0);
+        return rotatePuzzle($puzzlePieces, $leftSide, $topSide, 0, 0, $puzzlePiecesTaken);
     } else if (($x == 0 && $y < $w && $y > 0 || $y == $w && $x > 0  && $x < $h || $y == 0 && $x > 0 && $x < $h || $x == $h && $y > 0 && $y < $w)) {
-        print_r($leftSide);
-        print_r($topSide);
-        return rotatePuzzle($puzzlePieces, ($y == 0) ? $leftSide = 0 : $leftSide, ($x == 0) ? $topSide = 0 : $topSide, ($y == $w) ? $rightSide = 0 : $rightSide, ($x == $h) ? $bottomSide = 0 : $bottomSide);
+        return rotatePuzzle($puzzlePieces, ($y == 0) ? 0 : $leftSide, ($x == 0) ? 0 : $topSide, ($y == $w) ? 0 : null, ($x == $h) ? 0 : null, $puzzlePiecesTaken);
     } else {
-        return rotatePuzzle($puzzlePieces, $leftSide, $topSide, $rightSide, $bottomSide);
+        return rotatePuzzle($puzzlePieces, $leftSide, $topSide, null, null, $puzzlePiecesTaken);
     }
 }
 
-function rotatePuzzle($puzzle, $leftSide = null, $topSide = null, $rightSide = null, $bottomSide = null)
+function rotatePuzzle($puzzle, $leftSide, $topSide, $rightSide, $bottomSide, $puzzlePiecesTaken)
 {
     $arrTemp = [$leftSide, $topSide, $rightSide, $bottomSide];
 
     foreach ($puzzle as $key => $index) {
-        if(in_array($key,    )){
-            break;
-        }
-        for ($j = 0; $j < count($index) - 1; $j++) {
-            $temp = $index[$j];
-            $index[$j] = $index[$j + 1];
-            $index[$j + 1] = $temp;
+        if (!in_array($key + 1, $puzzlePiecesTaken)) {
+            // print_r("piecesTaken");
+            // var_dump($puzzlePiecesTaken);
 
-            // print_r("rotate");
-            // var_dump($index);
+            for ($j = 0; $j < 4; $j++) {
 
-            // print_r("plantilla");
-            // var_dump($arrTemp);
-
-            $checkDif = array_map(function ($arr0, $arr1) {
-                if (!is_null($arr1) && $arr1 == $arr0) {
-                    return 'true';
-                } else if (!is_null($arr1) && $arr1 != $arr0) {
-                    return 'false';
-                } else {
-                    return 'null';
+                if ($j > 0) {
+                    $temp0 = $index[0];
+                    $index[0] = $index[3];
+                    $temp1 = $index[1];
+                    $index[1] = $temp0;
+                    $temp2 = $index[2];
+                    $index[2] = $temp1;
+                    $index[3] = $temp2;
                 }
-            }, $index, $arrTemp);
 
-            // print_r("check");
-            // var_dump($checkDif);
+                $checkDif = array_map(function ($arr0, $arr1) {
+                    if (!is_null($arr1) && $arr1 == $arr0) {
+                        return 'true';
+                    } else if (!is_null($arr1) && $arr1 != $arr0) {
+                        return 'false';
+                    } else {
+                        return 'null';
+                    }
+                }, $index, $arrTemp);
 
-            if (in_array('false', $checkDif)) {
-                continue;
-            } else {
-                return $index;
+                if (in_array('false', $checkDif)) {
+                    continue;
+                } else {
+                    // print_r("rotate");
+                    // var_dump($index);
+                    return [$key + 1, $index];
+                }
             }
         }
     }
+    print_r("no encontrado");
 }
 
 
