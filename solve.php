@@ -9,17 +9,21 @@ function getPuzzleAssemble($w, $h, $puzzlePieces)
 {
     $puzzlePiecesTaken = array();
     $leftSide = null;
-    $topSide = null;
     $puzzlePiecesPos = '';
+    $temp = [null, null, null, null];
 
     for ($i = 0; $i < $h; $i++) {
+        $topSide = array();
         for ($j = 0; $j < $w; $j++) {
-            [$puzzlePiecesPos, $puzzleComplete[$i][]] = findAPiece($i, $j, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken);
+            [$puzzlePiecesPos, $puzzleComplete[$i][]] = findAPiece($i, $j, $w, $h, $leftSide, $temp[$j], $puzzlePieces, $puzzlePiecesTaken);
             $leftSide = $puzzleComplete[$i][$j][2];
-            $topSide = $puzzleComplete[$i][$j][3];
+            $topSide[] = $puzzleComplete[$i][$j][3];
             $puzzlePiecesTaken[] = $puzzlePiecesPos;
+            var_dump($puzzleComplete);
         }
+        $temp = $topSide;
     }
+
     return $puzzleComplete;
 }
 
@@ -27,16 +31,15 @@ function getPuzzleAssemble($w, $h, $puzzlePieces)
 function findAPiece($x, $y, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken)
 {
     if ($x == 0 && $y == 0) {
-        // print_r("find a piece");
         return rotatePuzzle($puzzlePieces, 0, 0, null, null, $puzzlePiecesTaken);
-    } else if ($y == $w && $x == 0) {
+    } else if ($y == ($w - 1) && $x == 0) {
         return rotatePuzzle($puzzlePieces, $leftSide, 0, 0, null, $puzzlePiecesTaken);
-    } else if ($y == 0 && $x == $h) {
+    } else if ($y == 0 && $x == ($h - 1)) {
         return rotatePuzzle($puzzlePieces, 0, $topSide, null, 0, $puzzlePiecesTaken);
-    } else if ($y == $w && $x == $h) {
+    } else if ($y == ($w - 1) && $x == ($h - 1)) {
         return rotatePuzzle($puzzlePieces, $leftSide, $topSide, 0, 0, $puzzlePiecesTaken);
-    } else if (($x == 0 && $y < $w && $y > 0 || $y == $w && $x > 0  && $x < $h || $y == 0 && $x > 0 && $x < $h || $x == $h && $y > 0 && $y < $w)) {
-        return rotatePuzzle($puzzlePieces, ($y == 0) ? 0 : $leftSide, ($x == 0) ? 0 : $topSide, ($y == $w) ? 0 : null, ($x == $h) ? 0 : null, $puzzlePiecesTaken);
+    } else if (($x == 0 && $y < $w && $y > 0 || $y == ($w - 1) && $x > 0  && $x < $h || $y == 0 && $x > 0 && $x < $h || $x == ($h - 1) && $y > 0 && $y < $w)) {
+        return rotatePuzzle($puzzlePieces, ($y == 0) ? 0 : $leftSide, ($x == 0) ? 0 : $topSide, ($y == ($w - 1)) ? 0 : null, ($x == ($h - 1)) ? 0 : null, $puzzlePiecesTaken);
     } else {
         return rotatePuzzle($puzzlePieces, $leftSide, $topSide, null, null, $puzzlePiecesTaken);
     }
@@ -46,10 +49,11 @@ function rotatePuzzle($puzzle, $leftSide, $topSide, $rightSide, $bottomSide, $pu
 {
     $arrTemp = [$leftSide, $topSide, $rightSide, $bottomSide];
 
+    print_r("rotate");
+    var_dump($arrTemp);
+
     foreach ($puzzle as $key => $index) {
         if (!in_array($key + 1, $puzzlePiecesTaken)) {
-            // print_r("piecesTaken");
-            // var_dump($puzzlePiecesTaken);
 
             for ($j = 0; $j < 4; $j++) {
 
@@ -66,24 +70,23 @@ function rotatePuzzle($puzzle, $leftSide, $topSide, $rightSide, $bottomSide, $pu
                 $checkDif = array_map(function ($arr0, $arr1) {
                     if (!is_null($arr1) && $arr1 == $arr0) {
                         return 'true';
-                    } else if (!is_null($arr1) && $arr1 != $arr0) {
+                    } else if (!is_null($arr1) && $arr1 != $arr0 || is_null($arr1) && $arr0 == 0) {
                         return 'false';
-                    } else {
-                        return 'null';
                     }
                 }, $index, $arrTemp);
 
                 if (in_array('false', $checkDif)) {
                     continue;
                 } else {
-                    // print_r("rotate");
-                    // var_dump($index);
+                    print_r("check");
+                    var_dump($index);
                     return [$key + 1, $index];
                 }
             }
         }
     }
-    print_r("no encontrado");
+    var_dump($puzzlePiecesTaken);
+    throw new Exception("no hemos podido resolver el puzzle");
 }
 
 
@@ -100,11 +103,10 @@ $resultTitle = "\n\nSoluciones\n______________";
 
 $puzzleAssembled = getPuzzleAssemble($w, $h, $puzzlePieces);
 
-var_dump($puzzleAssembled);
-die();
-
 foreach ($puzzleAssembled as $key => $index) {
-    $result .= $index . '\n';
+    foreach ($index as $key => $value) {
+        $result .= $value . '\n';
+    }
 }
 
 fwrite($fOpen, $resultTitle);
