@@ -10,17 +10,31 @@ function getPuzzleAssemble($w, $h, $puzzlePieces, $puzzlePiecesTaken = array(), 
     $leftSide = null;
     $topSide = null;
 
-    for ($i = 0; $i < 1; $i++) {
+    // var_dump($puzzlePiecesTaken);
+    // print_r("ooohhhh");
+
+    for ($i = 0; $i < $h; $i++) {
         for ($j = 0; $j < $w; $j++) {
-            if (!isset($puzzlePiecesTaken[$i][$j])) {
+            if (!isset($puzzlePieceChoose[$i][$j])) {
                 if ($j > 0 && isset($puzzlePieceChoose[$i][$j - 1])) {
                     $leftSide = $puzzlePieceChoose[$i][$j - 1][2];
                 }
                 if ($i > 0 && isset($puzzlePieceChoose[$i - 1][$j])) {
                     $topSide = $puzzlePieceChoose[$i - 1][$j][3];
                 }
+                // print_r('leftSide ');
+                // print_r($leftSide);
+                // print_r('topSide ');
+                // print_r($topSide);
+
+                // var_dump($puzzlePiecesTaken[$i][$j]);
+                // print_r("aqui con " . $i . " " . $j);
+
                 [$puzzlePiecesTaken[], $puzzlePieceChoose[$i][]] = findAPiece($i, $j, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
+                var_dump($puzzlePiecesTaken);
             }
+            // print_r('i :' . $i);
+            // print_r('j :' . $j);
         }
     }
 
@@ -30,6 +44,8 @@ function getPuzzleAssemble($w, $h, $puzzlePieces, $puzzlePiecesTaken = array(), 
 
 function findAPiece($x, $y, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose)
 {
+    // print_r('x :' . $x);
+    // print_r('y :' . $y);
     if ($x == 0 && $y == 0) {
         return rotatePuzzle($w, $h, $puzzlePieces, 0, 0, null, null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
     } else if ($y == ($w - 1) && $x == 0) {
@@ -65,27 +81,29 @@ function rotatePuzzle($w, $h, $puzzle, $leftSide, $topSide, $rightSide, $bottomS
                 }
 
                 $checkDif = array_map(function ($arr0, $arr1) {
-                    if ($arr1 != null && $arr1 == $arr0) {
-                        print_r("true");
+                    if (!is_null($arr1) && $arr1 == $arr0) {
                         return true;
-                    } else if ($arr1 != null && $arr1 != $arr0) {
+                    } else if (!is_null($arr1) && $arr1 != $arr0 || is_null($arr1) && $arr0 == 0) {
                         return false;
-                    } else {
-                        return null;
+                    } else if (is_null($arr1) && $arr0 != 0) {
+                        return true;
                     }
                 }, $index, $arrTemp);
 
                 // var_dump($index);
                 // var_dump($arrTemp);
+                // var_dump($checkDif);
 
                 if (in_array(false, $checkDif)) {
                     continue;
                 } else {
+                    $skipLast = '';
                     return [$key + 1, $index];
                 }
             }
         }
     }
+
 
     if (end($puzzlePiecesTaken)) {
         $skipLast = end($puzzlePiecesTaken);
@@ -105,7 +123,7 @@ function rotatePuzzle($w, $h, $puzzle, $leftSide, $topSide, $rightSide, $bottomS
 
 $fOpen = fopen('4x4.txt', 'a+');
 
-while ($fGets = (fgets($fOpen))) {
+while ($fGets = trim(fgets($fOpen))) {
     $puzzlePieces[] = explode(' ', $fGets);
 }
 
@@ -116,7 +134,7 @@ $resultTitle = "\n\nSoluciones\n______________";
 
 $puzzleAssembled = getPuzzleAssemble($w, $h, $puzzlePieces);
 $result = '';
-var_dump($puzzleAssembled);
+// var_dump($puzzleAssembled);
 die();
 
 foreach ($puzzleAssembled as $key => $index) {
@@ -138,7 +156,11 @@ fclose($fOpen);
 //     [[1, 2, 1, 3], [4, 45, 5, 8], [7, 8, 5, 4], [4, 5, 3, 2]]
 // ];
 
-// print_r(end(end($arr)));
+// if (!isset($arr[0][4])) {
+//     print_r("yes");
+// } else {
+//     print_r("not");
+// }
 
 
 // array_pop($arr[count($arr) - 1]);
@@ -150,4 +172,13 @@ fclose($fOpen);
 
 // if (in_array(false, $arr)) {
 //     print_r("yes");
+// }
+
+
+// $arr = [null, true, true, true];
+
+// if (in_array(false, $arr)) {
+//     print_r("in array");
+// } else {
+//     print_r("not in array");
 // }
