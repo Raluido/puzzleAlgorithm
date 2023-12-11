@@ -5,48 +5,47 @@
 // $h represents the array height the array return will content
 // $puzzlePieces represents an array with $w * $h arrays inside
 
-function getPuzzleAssemble($w, $h, $puzzlePieces, $puzzlePiecesTaken = array(), $skipLast = null)
+function getPuzzleAssemble($w, $h, $puzzlePieces, $puzzlePiecesTaken = array(), $puzzlePieceChoose = array(), $skipLast = null)
 {
     $leftSide = null;
-    $puzzlePiecesPos = '';
-    $puzzlePieceChoose = '';
-    $temp = [null, null, null, null];
+    $topSide = null;
 
-    for ($i = 0; $i < 2; $i++) {
-        $topSide = array();
+    for ($i = 0; $i < 1; $i++) {
         for ($j = 0; $j < $w; $j++) {
             if (!isset($puzzlePiecesTaken[$i][$j])) {
-                [$puzzlePiecesPos, $puzzlePieceChoose] = findAPiece($i, $j, $w, $h, $leftSide, $temp[$j], $puzzlePieces, $puzzlePiecesTaken, $skipLast);
-                $leftSide = $puzzlePieceChoose[2];
-                $topSide[] = $puzzlePieceChoose[3];
-                $puzzlePiecesTaken[$i][] = $puzzlePiecesPos;
+                if ($j > 0 && isset($puzzlePieceChoose[$i][$j - 1])) {
+                    $leftSide = $puzzlePieceChoose[$i][$j - 1][2];
+                }
+                if ($i > 0 && isset($puzzlePieceChoose[$i - 1][$j])) {
+                    $topSide = $puzzlePieceChoose[$i - 1][$j][3];
+                }
+                [$puzzlePiecesTaken[], $puzzlePieceChoose[$i][]] = findAPiece($i, $j, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
             }
         }
-        $temp = $topSide;
     }
 
     return $puzzlePiecesTaken;
 }
 
 
-function findAPiece($x, $y, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $skipLast)
+function findAPiece($x, $y, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose)
 {
     if ($x == 0 && $y == 0) {
-        return rotatePuzzle($w, $h, $puzzlePieces, 0, 0, null, null, $puzzlePiecesTaken, $skipLast);
+        return rotatePuzzle($w, $h, $puzzlePieces, 0, 0, null, null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
     } else if ($y == ($w - 1) && $x == 0) {
-        return rotatePuzzle($w, $h, $puzzlePieces, $leftSide, 0, 0, null, $puzzlePiecesTaken, $skipLast);
+        return rotatePuzzle($w, $h, $puzzlePieces, $leftSide, 0, 0, null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
     } else if ($y == 0 && $x == ($h - 1)) {
-        return rotatePuzzle($w, $h, $puzzlePieces, 0, $topSide, null, 0, $puzzlePiecesTaken, $skipLast);
+        return rotatePuzzle($w, $h, $puzzlePieces, 0, $topSide, null, 0, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
     } else if ($y == ($w - 1) && $x == ($h - 1)) {
-        return rotatePuzzle($w, $h, $puzzlePieces, $leftSide, $topSide, 0, 0, $puzzlePiecesTaken, $skipLast);
+        return rotatePuzzle($w, $h, $puzzlePieces, $leftSide, $topSide, 0, 0, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
     } else if (($x == 0 && $y < $w && $y > 0 || $y == ($w - 1) && $x > 0  && $x < $h || $y == 0 && $x > 0 && $x < $h || $x == ($h - 1) && $y > 0 && $y < $w)) {
-        return rotatePuzzle($w, $h, $puzzlePieces, ($y == 0) ? 0 : $leftSide, ($x == 0) ? 0 : $topSide, ($y == ($w - 1)) ? 0 : null, ($x == ($h - 1)) ? 0 : null, $puzzlePiecesTaken, $skipLast);
+        return rotatePuzzle($w, $h, $puzzlePieces, ($y == 0) ? 0 : $leftSide, ($x == 0) ? 0 : $topSide, ($y == ($w - 1)) ? 0 : null, ($x == ($h - 1)) ? 0 : null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
     } else {
-        return rotatePuzzle($w, $h, $puzzlePieces, $leftSide, $topSide, null, null, $puzzlePiecesTaken, $skipLast);
+        return rotatePuzzle($w, $h, $puzzlePieces, $leftSide, $topSide, null, null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
     }
 }
 
-function rotatePuzzle($w, $h, $puzzle, $leftSide, $topSide, $rightSide, $bottomSide, $puzzlePiecesTaken, $skipLast)
+function rotatePuzzle($w, $h, $puzzle, $leftSide, $topSide, $rightSide, $bottomSide, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose)
 {
     $arrTemp = [$leftSide, $topSide, $rightSide, $bottomSide];
 
@@ -66,14 +65,20 @@ function rotatePuzzle($w, $h, $puzzle, $leftSide, $topSide, $rightSide, $bottomS
                 }
 
                 $checkDif = array_map(function ($arr0, $arr1) {
-                    if (!is_null($arr1) && $arr1 == $arr0) {
-                        return 'true';
-                    } else if (!is_null($arr1) && $arr1 != $arr0 || is_null($arr1) && $arr0 == 0) {
-                        return 'false';
+                    if ($arr1 != null && $arr1 == $arr0) {
+                        print_r("true");
+                        return true;
+                    } else if ($arr1 != null && $arr1 != $arr0) {
+                        return false;
+                    } else {
+                        return null;
                     }
                 }, $index, $arrTemp);
 
-                if (in_array('false', $checkDif)) {
+                // var_dump($index);
+                // var_dump($arrTemp);
+
+                if (in_array(false, $checkDif)) {
                     continue;
                 } else {
                     return [$key + 1, $index];
@@ -81,13 +86,20 @@ function rotatePuzzle($w, $h, $puzzle, $leftSide, $topSide, $rightSide, $bottomS
             }
         }
     }
-    $skipLast = $puzzlePiecesTaken[count($puzzlePiecesTaken) - 1];
-    print_r("skip");
-    print_r($skipLast);
-    array_pop($puzzlePiecesTaken[count($puzzlePiecesTaken) - 1]);
-    print_r("taken");
-    var_dump($puzzlePiecesTaken);
-    getPuzzleAssemble($w, $h, $puzzle, $puzzlePiecesTaken, $skipLast);
+
+    if (end($puzzlePiecesTaken)) {
+        $skipLast = end($puzzlePiecesTaken);
+        array_pop($puzzlePiecesTaken);
+    }
+
+    if (count($puzzlePieceChoose) > 0) {
+        array_pop($puzzlePieceChoose[count($puzzlePieceChoose) - 1]);
+        if (count($puzzlePieceChoose[count($puzzlePieceChoose) - 1]) == 0) {
+            array_pop($puzzlePieceChoose);
+        }
+    }
+
+    getPuzzleAssemble($w, $h, $puzzle, $puzzlePiecesTaken, $puzzlePieceChoose, $skipLast);
 }
 
 
@@ -119,12 +131,23 @@ fclose($fOpen);
 
 
 
+
+
 // $arr = [
 //     [[1, 2, 1, 3], [4, 45, 5, 8], [7, 8, 9, 7], [4, 5, 8, 7]],
 //     [[1, 2, 1, 3], [4, 45, 5, 8], [7, 8, 5, 4], [4, 5, 3, 2]]
 // ];
 
+// print_r(end(end($arr)));
+
 
 // array_pop($arr[count($arr) - 1]);
 
 // var_dump($arr);
+
+
+// $arr = [true, true, true, true];
+
+// if (in_array(false, $arr)) {
+//     print_r("yes");
+// }
