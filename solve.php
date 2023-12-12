@@ -5,7 +5,7 @@
 // $h represents the array height the array return will content
 // $puzzlePieces represents an array with $w * $h arrays inside
 
-function getPuzzleAssemble($w, $h, $puzzlePieces, $puzzlePiecesTaken = array(), $puzzlePieceChoose = array(), $skipLast = null)
+function getPuzzleAssemble($w, $h, $puzzlePieces, $puzzlePiecesTaken = array(), $puzzlePieceChoose = array(), $skipLast = '')
 {
     $leftSide = null;
     $topSide = null;
@@ -15,68 +15,94 @@ function getPuzzleAssemble($w, $h, $puzzlePieces, $puzzlePiecesTaken = array(), 
 
     for ($i = 0; $i < $h; $i++) {
         for ($j = 0; $j < $w; $j++) {
-            if (!isset($puzzlePieceChoose[$i][$j])) {
-                if ($j > 0 && isset($puzzlePieceChoose[$i][$j - 1])) {
-                    $leftSide = $puzzlePieceChoose[$i][$j - 1][2];
-                }
-                if ($i > 0 && isset($puzzlePieceChoose[$i - 1][$j])) {
-                    $topSide = $puzzlePieceChoose[$i - 1][$j][3];
-                }
-                // print_r('leftSide ');
-                // print_r($leftSide);
-                // print_r('topSide ');
-                // print_r($topSide);
-
-                // var_dump($puzzlePiecesTaken[$i][$j]);
-                // print_r("aqui con " . $i . " " . $j);
-
-                $puzzleComplete = findAPiece($i, $j, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
-                if (count($puzzleComplete) == 2) {
-                    [$puzzlePiecesTaken[], $puzzlePieceChoose[$i][]] = $puzzleComplete;
-                } else {
-                    print_r("here");
-                    break 2;
-                }
-                // [$puzzlePiecesTaken[], $puzzlePieceChoose[$i][]] = findAPiece($i, $j, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
-                var_dump($puzzleComplete);
+            if ($j > 0 && isset($puzzlePieceChoose[$i][$j - 1])) {
+                $leftSide = $puzzlePieceChoose[$i][$j - 1][2];
             }
+            if ($j == 0) {
+                $leftSide = null;
+            }
+            if ($i > 0 && isset($puzzlePieceChoose[$i - 1][$j])) {
+                $topSide = $puzzlePieceChoose[$i - 1][$j][3];
+            }
+            if ($i == 0) {
+                $topSide = null;
+            }
+
+            var_dump($puzzlePieceChoose);
+
+            print_r('i :');
+            print_r($i);
+            print_r('j :');
+            print_r($j);
+
+            print_r('leftSide ');
+            print_r($leftSide);
+            print_r('topSide ');
+            print_r($topSide);
+
+            // var_dump($puzzlePiecesTaken[$i][$j]);
+            // print_r("aqui con " . $i . " " . $j);
+
+            $puzzleComplete = findAPiece($i, $j, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $puzzlePieceChoose, $skipLast);
+
+            if ($puzzleComplete[0]) {
+                [$result, $puzzlePiecesTaken[], $puzzlePieceChoose[$i][]] = $puzzleComplete;
+                var_dump($puzzlePiecesTaken);
+            } else {
+                [$result, $puzzlePiecesTaken, $puzzlePieceChoose, $skipLast] = $puzzleComplete;
+
+                if ($i == 0 && $j == 0) {
+                    return "No hemos encontrado una ficha para iniciar el puzzle en la esquina superior izquierda.";
+                } else if ($i >= 0 && $j > 0) {
+                    $j -= 1;
+                    // print_r($i);
+                    // print_r($j);
+                } else if ($i >= 0 && $j == 0) {
+                    $j = $w - 1;
+                    $i -= 1;
+                }
+                print_r("aqui");
+            }
+            // var_dump($puzzlePiecesTaken);
+            // [$puzzlePiecesTaken[], $puzzlePieceChoose[$i][]] = findAPiece($i, $j, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
+
             // print_r('i :' . $i);
             // print_r('j :' . $j);
         }
     }
 
-    print_r("estoooo");
-    var_dump($puzzleComplete);
-    die();
+    // print_r("estoooo");
+    // var_dump($puzzleComplete);
+    // die();
 
     return $puzzlePiecesTaken;
 }
 
 
-function findAPiece($x, $y, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose)
+function findAPiece($x, $y, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $puzzlePieceChoose, $skipLast)
 {
     // print_r('x :' . $x);
     // print_r('y :' . $y);
     if ($x == 0 && $y == 0) {
-        return rotatePuzzle($w, $h, $puzzlePieces, 0, 0, null, null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
+        return rotatePuzzle($puzzlePieces, 0, 0, null, null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
     } else if ($y == ($w - 1) && $x == 0) {
-        return rotatePuzzle($w, $h, $puzzlePieces, $leftSide, 0, 0, null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
+        return rotatePuzzle($puzzlePieces, $leftSide, 0, 0, null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
     } else if ($y == 0 && $x == ($h - 1)) {
-        return rotatePuzzle($w, $h, $puzzlePieces, 0, $topSide, null, 0, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
+        return rotatePuzzle($puzzlePieces, 0, $topSide, null, 0, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
     } else if ($y == ($w - 1) && $x == ($h - 1)) {
-        return rotatePuzzle($w, $h, $puzzlePieces, $leftSide, $topSide, 0, 0, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
-    } else if (($x == 0 && $y < $w && $y > 0 || $y == ($w - 1) && $x > 0  && $x < $h || $y == 0 && $x > 0 && $x < $h || $x == ($h - 1) && $y > 0 && $y < $w)) {
-        return rotatePuzzle($w, $h, $puzzlePieces, ($y == 0) ? 0 : $leftSide, ($x == 0) ? 0 : $topSide, ($y == ($w - 1)) ? 0 : null, ($x == ($h - 1)) ? 0 : null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
+        return rotatePuzzle($puzzlePieces, $leftSide, $topSide, 0, 0, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
+    } else if (($x == 0 && $y < ($w - 1) && $y > 0 || $y == ($w - 1) && $x > 0  && $x < ($h - 1) || $y == 0 && $x > 0 && $x < ($h - 1) || $x == ($h - 1) && $y > 0 && $y < ($w - 1))) {
+        return rotatePuzzle($puzzlePieces, ($y == 0) ? 0 : $leftSide, ($x == 0) ? 0 : $topSide, ($y == ($w - 1)) ? 0 : null, ($x == ($h - 1)) ? 0 : null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
     } else {
-        return rotatePuzzle($w, $h, $puzzlePieces, $leftSide, $topSide, null, null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
+        return rotatePuzzle($puzzlePieces, $leftSide, $topSide, null, null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
     }
 }
 
-function rotatePuzzle($w, $h, $puzzle, $leftSide, $topSide, $rightSide, $bottomSide, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose)
+function rotatePuzzle($puzzlePieces, $leftSide, $topSide, $rightSide, $bottomSide, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose)
 {
     $arrTemp = [$leftSide, $topSide, $rightSide, $bottomSide];
 
-    foreach ($puzzle as $key => $index) {
+    foreach ($puzzlePieces as $key => $index) {
         if (!in_array($key + 1, $puzzlePiecesTaken) && $skipLast != ($key + 1)) {
 
             for ($j = 0; $j < 4; $j++) {
@@ -105,16 +131,29 @@ function rotatePuzzle($w, $h, $puzzle, $leftSide, $topSide, $rightSide, $bottomS
                 // var_dump($arrTemp);
                 // var_dump($checkDif);
 
+                // print_r("yeah");
+
+                // var_dump($arrTemp);
+
+                // if ($puzzlePiecesTaken[3] == 7 && $key == 14) {
+                //     var_dump($puzzlePiecesTaken);
+                //     var_dump($index);
+                //     var_dump($arrTemp);
+                //     die();
+                // }
+
                 if (in_array(false, $checkDif)) {
+                    // var_dump($arrTemp);
                     continue;
                 } else {
+
                     $skipLast = '';
-                    return [$key + 1, $index];
+                    // var_dump($key + 1);
+                    return [true, $key + 1, $index];
                 }
             }
         }
     }
-
 
     if (end($puzzlePiecesTaken)) {
         $skipLast = end($puzzlePiecesTaken);
@@ -128,7 +167,7 @@ function rotatePuzzle($w, $h, $puzzle, $leftSide, $topSide, $rightSide, $bottomS
         }
     }
 
-    return [$w, $h, $puzzle, $puzzlePiecesTaken, $puzzlePieceChoose, $skipLast];
+    return [false, $puzzlePiecesTaken, $puzzlePieceChoose, $skipLast];
 
     // getPuzzleAssemble($w, $h, $puzzle, $puzzlePiecesTaken, $puzzlePieceChoose, $skipLast);
 }
@@ -147,7 +186,7 @@ $resultTitle = "\n\nSoluciones\n______________";
 
 $puzzleAssembled = getPuzzleAssemble($w, $h, $puzzlePieces);
 $result = '';
-// var_dump($puzzleAssembled);
+//var_dump($puzzleAssembled);
 die();
 
 foreach ($puzzleAssembled as $key => $index) {
@@ -159,6 +198,11 @@ foreach ($puzzleAssembled as $key => $index) {
 fwrite($fOpen, $resultTitle);
 fwrite($fOpen, $result);
 fclose($fOpen);
+
+
+
+
+
 
 
 
