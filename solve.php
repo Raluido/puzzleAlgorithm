@@ -35,7 +35,7 @@ function getPuzzleAssemble($w, $h, $puzzlePieces, $puzzlePiecesTaken = array(), 
                     [$puzzlePiecesTaken[], $puzzlePieceChoose[$i][]] = $puzzleComplete;
                 } else {
                     print_r("here");
-                    break;
+                    break 2;
                 }
                 // [$puzzlePiecesTaken[], $puzzlePieceChoose[$i][]] = findAPiece($i, $j, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
                 var_dump($puzzleComplete);
@@ -45,7 +45,8 @@ function getPuzzleAssemble($w, $h, $puzzlePieces, $puzzlePiecesTaken = array(), 
         }
     }
 
-
+    print_r("estoooo");
+    var_dump($puzzleComplete);
     die();
 
     return $puzzlePiecesTaken;
