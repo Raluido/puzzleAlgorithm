@@ -43,11 +43,6 @@ function getPuzzleAssemble($w, $h, $puzzlePieces, $puzzlePiecesTaken = array(), 
                     $i -= 1;
                 }
             }
-            // if ($puzzlePiecesTaken[13] == 14) {
-            //     print_r($skipLast);
-            // var_dump($puzzlePiecesTaken);
-            //     die();
-            // }
         }
     }
 
@@ -140,10 +135,16 @@ array_shift($puzzlePieces);
 $resultTitle = "\n\nSoluciones\n______________";
 
 $puzzleAssembled = getPuzzleAssemble($w, $h, $puzzlePieces);
-$result = '';
+$result = $puzzleAssembled[0] . ' ';
 
-foreach ($puzzleAssembled as $key => $index) {
-    $result .= $index . "\n";
+for ($i = 1; $i < count($puzzleAssembled); $i++) {
+    $temp = 0;
+    if ($i - $temp == 4) {
+        $result .= $puzzleAssembled[$i] . "\n";
+        $temp = $i;
+    } else {
+        $result .= $puzzleAssembled[$i] . ' ';
+    }
 }
 
 fwrite($fOpen, $resultTitle);
