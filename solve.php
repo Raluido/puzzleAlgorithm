@@ -1,125 +1,99 @@
 <?php
 
 
-// $w represents the array width the array return will content
-// $h represents the array height the array return will content
-// $puzzlePieces represents an array with $w * $h arrays inside
-
-function getPuzzleAssemble($w, $h, $puzzlePieces, $puzzlePiecesTaken = array(), $puzzlePieceChoose = array(), $skipLast = '')
+function getPuzzleAssemble($lastRowElement, $lastRow, $puzzlePieces)
 {
-    $leftSide = null;
-    $topSide = null;
+    function assembling($lastRowElement, $lastRow, $puzzlePieces, $puzzlePieceSolveByNumber, $puzzlePieceSolveByPieces, &$results)
+    {
+        $leftSide = null;
+        $topSide = null;
+        $bottomSide = null;
+        $rightSide = null;
+        $puzzlePieceNextCandidatePosition = count($puzzlePieceSolveByNumber);
 
-    for ($i = 0; $i < $h; $i++) {
-        for ($j = 0; $j < $w; $j++) {
+        if ($puzzlePieceNextCandidatePosition == ($lastRowElement * $lastRow)) {
+            $results[] = $puzzlePieceSolveByNumber;
+            $puzzlePieceSolveByNumber = array();
+            $puzzlePieceSolveByPieces = array();
+            return;
+        }
 
-            if ($j > 0 && isset($puzzlePieceChoose[$i][$j - 1])) {
-                $leftSide = $puzzlePieceChoose[$i][$j - 1][2];
-            }
-            if ($j == 0) {
-                $leftSide = 0;
-            }
-            if ($i > 0 && isset($puzzlePieceChoose[$i - 1][$j])) {
-                $topSide = $puzzlePieceChoose[$i - 1][$j][3];
-            }
-            if ($i == 0) {
+        for ($puzzlePieceCandidate = 0; $puzzlePieceCandidate < count($puzzlePieces); $puzzlePieceCandidate++) {
+
+            if (in_array($puzzlePieceCandidate + 1, $puzzlePieceSolveByNumber)) continue;
+
+
+            if ($puzzlePieceNextCandidatePosition < $lastRowElement) {
                 $topSide = 0;
-            }
-
-            $puzzleComplete = findAPiece($i, $j, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $puzzlePieceChoose, $skipLast);
-
-
-            if ($puzzleComplete[0]) {
-                [$result, $puzzlePiecesTaken[], $puzzlePieceChoose[$i][], $skipLast] = $puzzleComplete;
             } else {
-                [$result, $puzzlePiecesTaken, $puzzlePieceChoose, $skipLast] = $puzzleComplete;
+                $topSide = $puzzlePieceSolveByPieces[$puzzlePieceNextCandidatePosition - $lastRowElement][3];
+            }
 
-                if ($i == 0 && $j == 0) {
-                    return "No hemos encontrado una ficha para iniciar el puzzle en la esquina superior izquierda.";
-                } else if ($j > 1) {
-                    $j -= 2;
-                } else if ($i > 0 && $j < 2) {
-                    $j = $w - 1;
-                    $i -= 1;
-                }
+            if ($puzzlePieceNextCandidatePosition > ($lastRowElement * $lastRow - 1) - $lastRowElement) {
+                $bottomSide = 0;
+            }
+
+            if ($puzzlePieceNextCandidatePosition % $lastRowElement == 0) {
+                $leftSide = 0;
+            } else {
+                $leftSide = $puzzlePieceSolveByPieces[$puzzlePieceNextCandidatePosition - 1][2];
+            }
+
+            if ($puzzlePieceNextCandidatePosition % $lastRowElement == $lastRowElement - 1) {
+                $rightSide = 0;
+            }
+
+            $puzzlePieceNeeded = [$leftSide, $topSide, $rightSide, $bottomSide];
+
+            [$isFitted, $puzzlePiece, $side] = rotatePuzzle($puzzlePieces[$puzzlePieceCandidate], $puzzlePieceNeeded);
+
+            if ($isFitted) {
+                $puzzlePieceSolveByPieces[] = $puzzlePiece;
+                $puzzlePieceSolveByNumber[] = $puzzlePieceCandidate + 1;
+                assembling($lastRowElement, $lastRow, $puzzlePieces, $puzzlePieceSolveByNumber, $puzzlePieceSolveByPieces, $results);
+                array_pop($puzzlePieceSolveByPieces);
+                array_pop($puzzlePieceSolveByNumber);
+            } else {
+                continue;
             }
         }
     }
 
-    return $puzzlePiecesTaken;
-}
+    function rotatePuzzle($piece, $pieceNeeded)
+    {
+        for ($side = 0; $side < 4; $side++) {
 
+            if ($side > 0) {
+                $temp0 = $piece[0];
+                $piece[0] = $piece[3];
+                $temp1 = $piece[1];
+                $piece[1] = $temp0;
+                $temp2 = $piece[2];
+                $piece[2] = $temp1;
+                $piece[3] = $temp2;
+            }
 
-function findAPiece($x, $y, $w, $h, $leftSide, $topSide, $puzzlePieces, $puzzlePiecesTaken, $puzzlePieceChoose, $skipLast)
-{
-    if ($x == 0 && $y == 0) {
-        return rotatePuzzle($puzzlePieces, 0, 0, null, null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
-    } else if ($y == ($w - 1) && $x == 0) {
-        return rotatePuzzle($puzzlePieces, $leftSide, 0, 0, null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
-    } else if ($y == 0 && $x == ($h - 1)) {
-        return rotatePuzzle($puzzlePieces, 0, $topSide, null, 0, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
-    } else if ($y == ($w - 1) && $x == ($h - 1)) {
-        return rotatePuzzle($puzzlePieces, $leftSide, $topSide, 0, 0, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
-    } else if (($x == 0 && $y < ($w - 1) && $y > 0 || $y == ($w - 1) && $x > 0  && $x < ($h - 1) || $y == 0 && $x > 0 && $x < ($h - 1) || $x == ($h - 1) && $y > 0 && $y < ($w - 1))) {
-        return rotatePuzzle($puzzlePieces, ($y == 0) ? 0 : $leftSide, ($x == 0) ? 0 : $topSide, ($y == ($w - 1)) ? 0 : null, ($x == ($h - 1)) ? 0 : null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
-    } else {
-        return rotatePuzzle($puzzlePieces, $leftSide, $topSide, null, null, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose);
-    }
-}
-
-function rotatePuzzle($puzzlePieces, $leftSide, $topSide, $rightSide, $bottomSide, $puzzlePiecesTaken, $skipLast, $puzzlePieceChoose)
-{
-    $arrTemp = [$leftSide, $topSide, $rightSide, $bottomSide];
-
-    foreach ($puzzlePieces as $key => $index) {
-        if (!in_array($key + 1, $puzzlePiecesTaken) && $skipLast != ($key + 1)) {
-
-            for ($j = 0; $j < 4; $j++) {
-
-                if ($j > 0) {
-                    $temp0 = $index[0];
-                    $index[0] = $index[3];
-                    $temp1 = $index[1];
-                    $index[1] = $temp0;
-                    $temp2 = $index[2];
-                    $index[2] = $temp1;
-                    $index[3] = $temp2;
-                }
-
-                $checkDif = array_map(function ($arr0, $arr1) {
-                    if ($arr1 == $arr0 || is_null($arr1) && $arr0 != 0) {
-                        return true;
-                    } else if ($arr1 != $arr0 || is_null($arr1) && $arr0 == 0) {
-                        return false;
-                    }
-                }, $index, $arrTemp);
-
-
-
-                if (in_array(false, $checkDif)) {
-                    continue;
+            $checkDif = array_map(function ($arr0, $arr1) {
+                if ($arr1 == $arr0 || is_null($arr1) && $arr0 != 0) {
+                    return true;
                 } else {
-                    $skipLast = '';
-                    return [true, $key + 1, $index, $skipLast];
+                    return false;
                 }
+            }, $piece, $pieceNeeded);
+
+            if (in_array(false, $checkDif)) {
+                continue;
+            } else {
+                return [true, $piece, $side];
             }
         }
+
+        return [false, null, null];
     }
 
-
-    if (end($puzzlePiecesTaken)) {
-        $skipLast = end($puzzlePiecesTaken);
-        array_pop($puzzlePiecesTaken);
-    }
-
-    if (count($puzzlePieceChoose) > 0) {
-        array_pop($puzzlePieceChoose[(count($puzzlePieceChoose)) - 1]);
-        if (count($puzzlePieceChoose[(count($puzzlePieceChoose)) - 1]) == 0) {
-            array_pop($puzzlePieceChoose);
-        }
-    }
-
-    return [false, $puzzlePiecesTaken, $puzzlePieceChoose, $skipLast];
+    $results = array();
+    assembling($lastRowElement, $lastRow, $puzzlePieces, [], [], $results);
+    return $results;
 }
 
 
@@ -132,62 +106,35 @@ while ($fGets = trim(fgets($fOpen))) {
 [$w, $h] = $puzzlePieces[0];
 array_shift($puzzlePieces);
 
-$resultTitle = "\n\nSoluciones\n______________";
+$resultTitle = "\n\nSoluciones\n______________\n\n";
 
 $puzzleAssembled = getPuzzleAssemble($w, $h, $puzzlePieces);
-$result = $puzzleAssembled[0] . ' ';
+if (is_string($puzzleAssembled)) {
+    $printResult = $puzzleAssembled;
+} else {
 
-for ($i = 1; $i < count($puzzleAssembled); $i++) {
-    $temp = 0;
-    if ($i - $temp == 4) {
-        $result .= $puzzleAssembled[$i] . "\n";
-        $temp = $i;
-    } else {
-        $result .= $puzzleAssembled[$i] . ' ';
+    $result = 0;
+    $printResult = '';
+
+    while ($result < count($puzzleAssembled)) {
+        $lastRowElement = $w;
+        $lastRow = $h;
+        $elementRow = 0;
+
+        for ($rowsCounter = 0; $rowsCounter < $lastRow; $rowsCounter++) {
+            $rows = '';
+            for ($elementRowSelected = $elementRow; $elementRowSelected < $lastRowElement; $elementRowSelected++) {
+                $rows .= $puzzleAssembled[$result][$elementRowSelected] . ' ';
+            }
+            $printResult .= $rows . "\n";
+            $elementRow = $lastRowElement;
+            $lastRowElement = $elementRow + $w;
+        }
+        $printResult .= "--------------\n\n";
+        $result++;
     }
 }
 
 fwrite($fOpen, $resultTitle);
-fwrite($fOpen, $result);
+fwrite($fOpen, $printResult);
 fclose($fOpen);
-
-
-
-
-
-
-
-
-
-
-// $arr = [
-//     [[1, 2, 1, 3], [4, 45, 5, 8], [7, 8, 9, 7], [4, 5, 8, 7]],
-//     [[1, 2, 1, 3], [4, 45, 5, 8], [7, 8, 5, 4], [4, 5, 3, 2]]
-// ];
-
-// if (!isset($arr[0][4])) {
-//     print_r("yes");
-// } else {
-//     print_r("not");
-// }
-
-
-// array_pop($arr[count($arr) - 1]);
-
-// var_dump($arr);
-
-
-// $arr = [true, true, true, true];
-
-// if (in_array(false, $arr)) {
-//     print_r("yes");
-// }
-
-
-// $arr = [null, true, true, true];
-
-// if (in_array(false, $arr)) {
-//     print_r("in array");
-// } else {
-//     print_r("not in array");
-// }
