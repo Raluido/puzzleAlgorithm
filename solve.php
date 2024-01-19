@@ -22,7 +22,6 @@ function getPuzzleAssemble($lastRowElement, $lastRow, $puzzlePieces)
 
             if (in_array($puzzlePieceCandidate + 1, $puzzlePieceSolveByNumber)) continue;
 
-
             if ($puzzlePieceNextCandidatePosition < $lastRowElement) {
                 $topSide = 0;
             } else {
@@ -45,50 +44,37 @@ function getPuzzleAssemble($lastRowElement, $lastRow, $puzzlePieces)
 
             $puzzlePieceNeeded = [$leftSide, $topSide, $rightSide, $bottomSide];
 
-            [$isFitted, $puzzlePiece, $side] = rotatePuzzle($puzzlePieces[$puzzlePieceCandidate], $puzzlePieceNeeded);
+            for ($side = 0; $side < 4; $side++) {
 
-            if ($isFitted) {
-                $puzzlePieceSolveByPieces[] = $puzzlePiece;
-                $puzzlePieceSolveByNumber[] = $puzzlePieceCandidate + 1;
-                assembling($lastRowElement, $lastRow, $puzzlePieces, $puzzlePieceSolveByNumber, $puzzlePieceSolveByPieces, $results);
-                array_pop($puzzlePieceSolveByPieces);
-                array_pop($puzzlePieceSolveByNumber);
-            } else {
-                continue;
-            }
-        }
-    }
-
-    function rotatePuzzle($piece, $pieceNeeded)
-    {
-        for ($side = 0; $side < 4; $side++) {
-
-            if ($side > 0) {
-                $temp0 = $piece[0];
-                $piece[0] = $piece[3];
-                $temp1 = $piece[1];
-                $piece[1] = $temp0;
-                $temp2 = $piece[2];
-                $piece[2] = $temp1;
-                $piece[3] = $temp2;
-            }
-
-            $checkDif = array_map(function ($arr0, $arr1) {
-                if ($arr1 == $arr0 || is_null($arr1) && $arr0 != 0) {
-                    return true;
-                } else {
-                    return false;
+                if ($side > 0) {
+                    $temp0 = $puzzlePieces[$puzzlePieceCandidate][0];
+                    $puzzlePieces[$puzzlePieceCandidate][0] = $puzzlePieces[$puzzlePieceCandidate][3];
+                    $temp1 = $puzzlePieces[$puzzlePieceCandidate][1];
+                    $puzzlePieces[$puzzlePieceCandidate][1] = $temp0;
+                    $temp2 = $puzzlePieces[$puzzlePieceCandidate][2];
+                    $puzzlePieces[$puzzlePieceCandidate][2] = $temp1;
+                    $puzzlePieces[$puzzlePieceCandidate][3] = $temp2;
                 }
-            }, $piece, $pieceNeeded);
 
-            if (in_array(false, $checkDif)) {
-                continue;
-            } else {
-                return [true, $piece, $side];
+                $checkDif = array_map(function ($arr0, $arr1) {
+                    if ($arr1 == $arr0 || is_null($arr1) && $arr0 != 0) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }, $puzzlePieces[$puzzlePieceCandidate], $puzzlePieceNeeded);
+
+                if (in_array(false, $checkDif)) {
+                    continue;
+                } else {
+                    $puzzlePieceSolveByPieces[] = $puzzlePieces[$puzzlePieceCandidate];
+                    $puzzlePieceSolveByNumber[] = $puzzlePieceCandidate + 1;
+                    assembling($lastRowElement, $lastRow, $puzzlePieces, $puzzlePieceSolveByNumber, $puzzlePieceSolveByPieces, $results);
+                    array_pop($puzzlePieceSolveByPieces);
+                    array_pop($puzzlePieceSolveByNumber);
+                }
             }
         }
-
-        return [false, null, null];
     }
 
     $results = array();
